@@ -7,7 +7,7 @@ echo "Toggling Fn key behavior..."
 
 # Close System Settings to start fresh
 killall "System Settings" 2>/dev/null
-sleep 1
+sleep 2
 
 osascript <<'END'
 -- Step 1: Open System Settings and navigate to Function Keys
@@ -15,26 +15,25 @@ tell application "System Settings"
     activate
 end tell
 
-delay 3
+delay 0.5
 
 tell application "System Events"
     tell process "System Settings"
         -- Focus search box
         keystroke "f" using command down
-        delay 0.8
         
         -- Search for "function keys"
         keystroke "function keys"
-        delay 3
+        delay 0.5
         
         -- Navigate to second result (Function Keys)
         keystroke (ASCII character 31) -- down arrow to first result
-        delay 0.5
+        delay 0.2
         keystroke (ASCII character 31) -- down arrow to second result
-        delay 1.5
+        delay 0.1
         
         -- Wait for dialog to open
-        delay 2
+        delay 0.5
         
         -- Step 2: Toggle the checkbox
         try
@@ -50,7 +49,6 @@ tell application "System Events"
                                     
                                     -- Click to toggle
                                     click checkbox 1
-                                    delay 0.5
                                     
                                     -- Get new state
                                     set newValue to value of checkbox 1
@@ -71,13 +69,10 @@ tell application "System Events"
             log "Error toggling checkbox: " & errMsg
         end try
         
-        delay 0.5
-        
     end tell
 end tell
 
 -- Close System Settings
-delay 0.5
 tell application "System Settings" to quit
 
 END
