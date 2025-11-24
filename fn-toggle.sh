@@ -4,10 +4,14 @@
 # Toggles between standard function keys (F1-F12) and multimedia keys
 
 # ============================================================================
-# DELAY CONFIGURATION
+# CONFIGURATION
 # ============================================================================
-# All timing delays are stored here for easy tuning and maintenance
+# All timing delays and retry settings are stored here for easy tuning and maintenance
 # Delays are optimized for speed while maintaining stability (tested with 10-test suite)
+
+# Retry settings
+MAX_RETRIES=3                    # Maximum number of attempts before giving up
+RETRY_DELAY=0.2                  # Seconds to wait between retry attempts (optimized via testing)
 
 # Process initialization
 DELAY_PROCESS_CLEANUP=2          # Time to wait after killing System Settings (allows clean restart)
@@ -25,13 +29,15 @@ DELAY_DIALOG_OPEN=0.8            # Critical: Time for Function Keys dialog sheet
 
 # ============================================================================
 
-echo "Toggling Fn key behavior..."
+# ============================================================================
+# MAIN TOGGLE FUNCTION
+# ============================================================================
+toggle_fn_keys() {
+    # Close System Settings to start fresh
+    killall "System Settings" 2>/dev/null
+    sleep $DELAY_PROCESS_CLEANUP
 
-# Close System Settings to start fresh
-killall "System Settings" 2>/dev/null
-sleep $DELAY_PROCESS_CLEANUP
-
-osascript <<END
+    osascript <<END
 -- Step 1: Open System Settings and navigate to Function Keys
 tell application "System Settings"
     activate
@@ -98,15 +104,60 @@ end tell
 tell application "System Settings" to quit
 
 END
+}
 
-if [ $? -eq 0 ]; then
-    echo "✓ Done! Fn key behavior toggled."
-    echo ""
-    echo "Test your Mac's built-in keyboard:"
-    echo "Press F1, F2, F3, etc. without holding Fn"
-    echo ""
-    echo "Changes take effect immediately!"
-else
-    echo "✗ Failed. Make sure Accessibility permissions are granted."
+# ============================================================================
+# RETRY LOGIC
+# ============================================================================
+echo "Toggling Fn key behavior..."
+
+attempt=1
+success=false
+
+while [ $attempt -le $MAX_RETRIES ]; do
+    if [ $attempt -gt 1 ]; then
+        echo "⟳ Retry attempt $attempt of $MAX_RETRIES..."
+    fi
+    
+    # Run the toggle function and capture output
+    output=$(toggle_fn_keys 2>&1)
+    exit_code=$?
+    
+    # Check if successful by looking for "Current state:" in output
+    # (indicates the script successfully accessed the dialog)
+    if echo "$output" | grep -q "Current state:"; then
+        success=true
+        echo "✓ Done! Fn key behavior toggled."
+        echo ""
+        echo "Test your Mac's built-in keyboard:"
+        echo "Press F1, F2, F3, etc. without holding Fn"
+        echo ""
+        echo "Changes take effect immediately!"
+        break
+    else
+        # Check if it's an error we should retry
+        if echo "$output" | grep -q "Error toggling checkbox"; then
+            if [ $attempt -lt $MAX_RETRIES ]; then
+                echo "⚠ Attempt $attempt failed (timing issue). Retrying..."
+                sleep $RETRY_DELAY
+            fi
+        else
+            # Different error - might be permissions
+            echo "✗ Failed. Make sure Accessibility permissions are granted."
+            echo "$output"
+            break
+        fi
+    fi
+    
+    attempt=$((attempt + 1))
+done
+
+# Final failure message if all retries exhausted
+if [ "$success" = false ]; then
+    if [ $attempt -gt $MAX_RETRIES ]; then
+        echo "✗ Failed after $MAX_RETRIES attempts."
+        echo "Try increasing DELAY_DIALOG_OPEN in the script configuration."
+    fi
+    exit 1
 fi
 
