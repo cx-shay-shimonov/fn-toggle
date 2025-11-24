@@ -13,6 +13,10 @@
 MAX_RETRIES=3                    # Maximum number of attempts before giving up
 RETRY_DELAY=0.2                  # Seconds to wait between retry attempts (optimized via testing)
 
+# Sound feedback
+SOUND_SUCCESS="/System/Library/Sounds/Funk.aiff"    # Play on successful toggle
+SOUND_FAILURE="/System/Library/Sounds/Glass.aiff"   # Play on failure
+
 # Process initialization
 DELAY_PROCESS_CLEANUP=2          # Time to wait after killing System Settings (allows clean restart)
 
@@ -133,6 +137,7 @@ while [ $attempt -le $MAX_RETRIES ]; do
         echo "Press F1, F2, F3, etc. without holding Fn"
         echo ""
         echo "Changes take effect immediately!"
+        afplay "$SOUND_SUCCESS" &  # Play success sound in background
         break
     else
         # Check if it's an error we should retry
@@ -157,6 +162,7 @@ if [ "$success" = false ]; then
     if [ $attempt -gt $MAX_RETRIES ]; then
         echo "✗ Failed after $MAX_RETRIES attempts."
         echo "Try increasing DELAY_DIALOG_OPEN in the script configuration."
+        afplay "$SOUND_FAILURE" &  # Play failure sound in background
     fi
     exit 1
 fi
