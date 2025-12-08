@@ -14,8 +14,8 @@ MAX_RETRIES=3                    # Maximum number of attempts before giving up
 RETRY_DELAY=0.2                  # Seconds to wait between retry attempts (optimized via testing)
 
 # Sound feedback
-SOUND_SUCCESS="/System/Library/Sounds/Funk.aiff"    # Play on successful toggle
-SOUND_FAILURE="/System/Library/Sounds/Glass.aiff"   # Play on failure
+SOUND_SUCCESS="/System/Library/Sounds/Tink.aiff"    # Play on successful toggle (keyboard click sound)
+SOUND_FAILURE="/System/Library/Sounds/Basso.aiff"   # Play on failure (classic error sound)
 
 # Process initialization
 DELAY_PROCESS_CLEANUP=2          # Time to wait after killing System Settings (allows clean restart)
