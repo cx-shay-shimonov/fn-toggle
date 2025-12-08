@@ -6,30 +6,29 @@
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-# All timing delays and retry settings are stored here for easy tuning and maintenance
-# Delays are optimized for speed while maintaining stability (tested with 10-test suite)
+# Timing delays ordered by execution flow - optimized for speed and stability
+# Delays match the sequence: cleanup → activation → search → navigation → dialog
 
-# Retry settings
-MAX_RETRIES=3                    # Maximum number of attempts before giving up
-RETRY_DELAY=0.2                  # Seconds to wait between retry attempts (optimized via testing)
-
-# Sound feedback
-SOUND_SUCCESS="/System/Library/Sounds/Tink.aiff"    # Play on successful toggle (keyboard click sound)
-SOUND_FAILURE="/System/Library/Sounds/Basso.aiff"   # Play on failure (classic error sound)
-
-# Process initialization
-DELAY_PROCESS_CLEANUP=2          # Time to wait after killing System Settings (allows clean restart)
+# Process cleanup
+DELAY_PROCESS_CLEANUP=1.0        # Wait after killing System Settings for clean restart
 
 # System Settings activation
-DELAY_SETTINGS_ACTIVATION=0.5    # Time for System Settings to fully activate and become responsive
+DELAY_SETTINGS_ACTIVATION=0.5    # Wait for System Settings to become responsive
 
 # Search and navigation
-DELAY_SEARCH_RESULTS=0.5         # Time for search results to populate after typing query
-DELAY_FIRST_NAVIGATION=0.2       # Time between first arrow down navigation
-DELAY_SECOND_NAVIGATION=0.1      # Time between second arrow down navigation
+DELAY_SEARCH_RESULTS=0.5         # Wait for search results to populate
+DELAY_NAVIGATION=0.2             # Wait between arrow key navigation steps
 
 # Dialog operations
-DELAY_DIALOG_OPEN=0.8            # Critical: Time for Function Keys dialog sheet to fully load
+DELAY_DIALOG_OPEN=0.8            # Wait for Function Keys dialog to fully load (critical)
+
+# Retry settings
+MAX_RETRIES=3                    # Maximum retry attempts before giving up
+RETRY_DELAY=0.2                  # Wait between retry attempts
+
+# Sound feedback
+SOUND_SUCCESS="/System/Library/Sounds/Tink.aiff"    # Success sound
+SOUND_FAILURE="/System/Library/Sounds/Basso.aiff"   # Failure sound
 
 # ============================================================================
 
@@ -37,12 +36,11 @@ DELAY_DIALOG_OPEN=0.8            # Critical: Time for Function Keys dialog sheet
 # MAIN TOGGLE FUNCTION
 # ============================================================================
 toggle_fn_keys() {
-    # Close System Settings to start fresh
     killall "System Settings" 2>/dev/null
     sleep $DELAY_PROCESS_CLEANUP
 
     osascript <<END
--- Step 1: Open System Settings and navigate to Function Keys
+-- Open System Settings and navigate to Function Keys dialog
 tell application "System Settings"
     activate
 end tell
@@ -51,23 +49,19 @@ delay $DELAY_SETTINGS_ACTIVATION
 
 tell application "System Events"
     tell process "System Settings"
-        -- Focus search box
+        -- Search for Function Keys
         keystroke "f" using command down
-        
-        -- Search for "function keys"
         keystroke "function keys"
         delay $DELAY_SEARCH_RESULTS
         
-        -- Navigate to second result (Function Keys)
-        keystroke (ASCII character 31) -- down arrow to first result
-        delay $DELAY_FIRST_NAVIGATION
-        keystroke (ASCII character 31) -- down arrow to second result
-        delay $DELAY_SECOND_NAVIGATION
-        
-        -- Wait for dialog to open
+        -- Navigate to second search result
+        keystroke (ASCII character 31) -- down arrow
+        delay $DELAY_NAVIGATION
+        keystroke (ASCII character 31) -- down arrow
+        delay $DELAY_NAVIGATION
         delay $DELAY_DIALOG_OPEN
         
-        -- Step 2: Toggle the checkbox
+        -- Toggle the checkbox
         try
             tell sheet 1 of window 1
                 tell group 1
@@ -75,14 +69,11 @@ tell application "System Events"
                         tell group 2
                             tell scroll area 1
                                 tell group 1
-                                    -- Get current state
                                     set currentValue to value of checkbox 1
                                     log "Current state: " & currentValue
                                     
-                                    -- Click to toggle
                                     click checkbox 1
                                     
-                                    -- Get new state
                                     set newValue to value of checkbox 1
                                     log "New state: " & newValue
                                     
@@ -100,11 +91,9 @@ tell application "System Events"
         on error errMsg
             log "Error toggling checkbox: " & errMsg
         end try
-        
     end tell
 end tell
 
--- Close System Settings
 tell application "System Settings" to quit
 
 END
@@ -123,12 +112,9 @@ while [ $attempt -le $MAX_RETRIES ]; do
         echo "⟳ Retry attempt $attempt of $MAX_RETRIES..."
     fi
     
-    # Run the toggle function and capture output
     output=$(toggle_fn_keys 2>&1)
-    exit_code=$?
     
-    # Check if successful by looking for "Current state:" in output
-    # (indicates the script successfully accessed the dialog)
+    # Success if we accessed the dialog (output contains "Current state:")
     if echo "$output" | grep -q "Current state:"; then
         success=true
         echo "✓ Done! Fn key behavior toggled."
@@ -137,17 +123,15 @@ while [ $attempt -le $MAX_RETRIES ]; do
         echo "Press F1, F2, F3, etc. without holding Fn"
         echo ""
         echo "Changes take effect immediately!"
-        afplay "$SOUND_SUCCESS" &  # Play success sound in background
+        afplay "$SOUND_SUCCESS" &
         break
     else
-        # Check if it's an error we should retry
         if echo "$output" | grep -q "Error toggling checkbox"; then
             if [ $attempt -lt $MAX_RETRIES ]; then
                 echo "⚠ Attempt $attempt failed (timing issue). Retrying..."
                 sleep $RETRY_DELAY
             fi
         else
-            # Different error - might be permissions
             echo "✗ Failed. Make sure Accessibility permissions are granted."
             echo "$output"
             break
@@ -162,7 +146,7 @@ if [ "$success" = false ]; then
     if [ $attempt -gt $MAX_RETRIES ]; then
         echo "✗ Failed after $MAX_RETRIES attempts."
         echo "Try increasing DELAY_DIALOG_OPEN in the script configuration."
-        afplay "$SOUND_FAILURE" &  # Play failure sound in background
+        afplay "$SOUND_FAILURE" &
     fi
     exit 1
 fi

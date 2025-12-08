@@ -88,21 +88,20 @@ end)
 
 All timing delays and settings are configurable at the top of `fn-toggle.sh`:
 
+### Timing Delays (ordered by execution flow)
+- `DELAY_PROCESS_CLEANUP=1.0` - Wait after killing System Settings
+- `DELAY_SETTINGS_ACTIVATION=0.5` - Wait for Settings to activate
+- `DELAY_SEARCH_RESULTS=0.5` - Wait for search results
+- `DELAY_NAVIGATION=0.2` - Wait between arrow key navigation steps
+- `DELAY_DIALOG_OPEN=0.8` - Wait for dialog to fully load (critical)
+
 ### Retry Settings
 - `MAX_RETRIES=3` - Maximum retry attempts
-- `RETRY_DELAY=0.2` - Seconds between retries (optimized via testing)
+- `RETRY_DELAY=0.2` - Seconds between retries
 
 ### Sound Feedback
 - `SOUND_SUCCESS` - Tink.aiff (keyboard click sound)
 - `SOUND_FAILURE` - Basso.aiff (classic error sound)
-
-### Timing Delays
-- `DELAY_PROCESS_CLEANUP=2` - Wait after killing System Settings
-- `DELAY_SETTINGS_ACTIVATION=0.5` - Wait for Settings to activate
-- `DELAY_SEARCH_RESULTS=0.5` - Wait for search results
-- `DELAY_FIRST_NAVIGATION=0.2` - Wait after first arrow down
-- `DELAY_SECOND_NAVIGATION=0.1` - Wait after second arrow down
-- `DELAY_DIALOG_OPEN=0.8` - Wait for dialog to fully load (critical)
 
 All delays are optimized for speed while maintaining reliability. Adjust if needed for your system.
 
