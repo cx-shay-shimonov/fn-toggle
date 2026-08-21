@@ -71,8 +71,13 @@ This script only affects the **Mac's built-in keyboard**. External keyboards may
 
 ## Project Structure
 
+All files are self-contained in this repo:
+
 ```
-/Users/shayshimonov/Projects/fn-toggle/
-├── fn-toggle.sh           # Main working script ⭐
-└── README.md              # Documentation
+/Users/shayshimonov/Projects/my/fn-toggle/
+├── fn-toggle.sh                # Main bash script ⭐
+├── toggle_helper.applescript   # AppleScript for UI automation ⭐
+└── README.md                   # Documentation
 ```
+
+**Note:** `fn-toggle.sh` calls `toggle_helper.applescript` which handles all the System Settings automation. Both files must be in the same directory.

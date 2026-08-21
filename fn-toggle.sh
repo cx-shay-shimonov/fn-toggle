@@ -29,7 +29,7 @@ toggle_fn_keys() {
     sleep 1
 
     # Call the standalone AppleScript file which works reliably
-    osascript "$SCRIPT_DIR/../toggle_helper.applescript"
+    osascript "$SCRIPT_DIR/toggle_helper.applescript"
 }
 
 # ============================================================================
