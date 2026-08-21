@@ -24,6 +24,10 @@ SOUND_FAILURE="/System/Library/Sounds/Glass.aiff"   # Play on failure
 # MAIN TOGGLE FUNCTION
 # ============================================================================
 toggle_fn_keys() {
+    # First, switch keyboard to English to ensure keystrokes work correctly
+    swift "$SCRIPT_DIR/switch_keyboard.swift" 2>/dev/null
+    sleep 0.5
+
     # Close System Settings to start fresh
     killall "System Settings" 2>/dev/null
     sleep 1
